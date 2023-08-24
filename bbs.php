@@ -1,7 +1,15 @@
 <?php
 require_once './function.php';
+$result = [];
 $fh = openFile();
-requestPost($fh);
+if ($_SERVER ["REQUEST_METHOD"] == "POST") {
+    // validation処理
+    $result = validationPost($_POST['name'], $_POST['comment']);
+    if($result['name'] && $result['comment']) {
+        // 保存処理
+        requestPost($fh);
+    }
+}
 $bbs = getBbs($fh);
 closeFile($fh);
 ?>
@@ -17,6 +25,9 @@ closeFile($fh);
             みんな好きに書き込んでね！
         </p>
     </div>
+    <form>
+
+    </form>
     <form action="/bbs.php" method="POST">
         <div>
             <label for="name">
