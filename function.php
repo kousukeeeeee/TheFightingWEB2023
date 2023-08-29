@@ -1,7 +1,33 @@
 <?php
 
-function openFile() {
-    $fileName = './bbs/comment.txt';
+define('COMMENT_FILE', './bbs/comment.txt');
+define('ACCOUNT_FILE', './bbs/account.csv');
+session_start();
+
+function checkLogin($id, $password) {
+    $fh = openFile(ACCOUNT_FILE);
+    
+    $accounts = getAccounts($fh);
+    closeFile($fh);
+    
+    return existsAccount($accounts, $id, $password);
+}
+
+function existsAccount($accounts, $id, $password) {
+    foreach($accounts as $account) {
+        if($account['id'] === $id && $account['pass'] === $password) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+function openFile($fileName) {
+    if(!file_exists($fileName)) {
+        touch($fileName);
+        chmod($fileName, 0777);
+    }
     return fopen($fileName, 'a+');
 }
 
@@ -34,6 +60,18 @@ function requestPost($fh) {
     if(fputcsv($fh, [$_POST['name'], $_POST['comment'], $date]) === false) {
         echo "やばいよ！";
     }
+}
+
+function getAccounts($fh) {
+    $accountArray = [];
+    rewind($fh);
+    while (($buffer = fgetcsv($fh, 4096)) !== false) {
+        $accountArray[] = [
+            'id' => $buffer[0],
+            'pass' => $buffer[1],
+        ];
+    }
+    return $bbsArray;
 }
 
 function getBbs($fh) {
