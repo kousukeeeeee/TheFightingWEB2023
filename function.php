@@ -9,7 +9,7 @@ function checkLogin($id, $password) {
     
     $accounts = getAccounts($fh);
     closeFile($fh);
-    
+
     return existsAccount($accounts, $id, $password);
 }
 
@@ -68,10 +68,10 @@ function getAccounts($fh) {
     while (($buffer = fgetcsv($fh, 4096)) !== false) {
         $accountArray[] = [
             'id' => $buffer[0],
-            'pass' => $buffer[1],
+            'pass' => $buffer[1]
         ];
     }
-    return $bbsArray;
+    return $accountArray;
 }
 
 function getBbs($fh) {

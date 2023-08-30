@@ -5,7 +5,7 @@ $result = [
     'comment' => true
 ];
 $fh = openFile(COMMENT_FILE);
-if($_SERVER ["REQUEST_METHOD"] == "POST") {
+if($_SERVER["REQUEST_METHOD"] == "POST") {
     // validation処理
     $result = validationPost($_POST['name'], $_POST['comment']);
     if($result['name'] && $result['comment']) {
@@ -69,7 +69,7 @@ closeFile($fh);
             <input type="submit" value="Login">
         </form>
     <?php endif; ?>
-        
+
     <hr />
 <h2>書き込み一覧だよー！</h2>
 <div>
