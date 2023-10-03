@@ -1,13 +1,17 @@
 <?php
 require_once './function.php';
 
+// POSTをされたかどうか
 if($_SERVER["REQUEST_METHOD"] == "POST") {
+  $pdo = dbConnect();
+  // @todo validation check
 
-    $result = checkLogin($_POST['id'], $_POST['password']);
-    
-    if($result) {
-        // 一致した場合には、ログイン状態にする
-        $_SESSION['login'] = $_POST['id'];
-      }
-    }
+  // acccount情報とPOSTの情報が一致するかどうか
+  $account = checkLogin($pdo, $_POST['name'], $_POST['password']);
+
+  if($account) {
+    // 一致した場合には、ログイン状態にする
+    $_SESSION['account'] = $account;
+  }
+}
 header('Location: /bbs.php');
