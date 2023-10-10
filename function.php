@@ -40,17 +40,6 @@ function saveAccount($pdo, $name, $password, $isAdmin) {
     return $sth->execute([$name, password_hash($password, PASSWORD_BCRYPT), $isAdmin ? 1 : 0]);
 }
 
-function openFile($fileName) {
-    if(!file_exists($fileName)) {
-        touch($fileName);
-        chmod($fileName, 0777);
-    }
-    return fopen($fileName, 'a+');
-}
-
-function closeFile($fh) {
-    fclose($fh);
-}
 
 function validationPost($comment) {
     $result = [
@@ -71,27 +60,14 @@ function requestPost($pdo) {
 }
 
 
-function deleteBbs($id) {
-    // @todo これもDBに依存させるよ
-    $fh = openFile(COMMENT_FILE);
-    $bbs = getBbs($fh);
-    closeFile($fh);
-
-    $fh = openFile(COMMENT_FILE, 'w');
-    foreach($bbs as $record) {
-        if($record['id'] != $id) {
-            if(fputcsv($fh, [$record['id'], $record['name'], $record['comment'], $record['date']]) === false) {
-                // @todo エラーハンドリングをもっとまじめにするよ
-                echo "やばいよ！";
-            }
-        }
-    }
-    closeFile($fh);
+function deleteBbs($pdo, $id) {
+    $sth = $pdo->prepare("DELETE FROM `comments` WHERE id=?;");
+    return $sth->execute([$id]);
 }
 
 
 function getBbs($pdo) {
-    $sth = $pdo->prepare("SELECT `comment`, `create_date`, `name` FROM comments JOIN accounts ON comments.account_id = accounts.id;");
+    $sth = $pdo->prepare("SELECT `comments`.`id`, `comment`, `create_date`, `name` FROM comments JOIN accounts ON comments.account_id = accounts.id;");
     $sth->execute();
     return $sth->fetchAll();
 }
