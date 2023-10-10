@@ -1,26 +1,52 @@
 <?php
+define('COMMENT_FILE', './bbs/comment.txt');
+session_start();
 
-function openFile() {
-    $fileName = './bbs/comment.txt';
-    return fopen($fileName, 'a+');
+
+function checkLogin($pdo, $id, $password) {
+    $account = findAccountByName($pdo, $id);
+    return !empty($account) && password_verify($password, $account['password']) ? $account : false;
 }
 
-function closeFile($fh) {
-    fclose($fh);
+function findAccountByName($pdo, $id) {
+    $sth = $pdo->prepare("SELECT * FROM accounts WHERE `name` = ?");
+    $sth->execute([$id]);
+    return $sth->fetch();
 }
 
-function validationPost($name, $comment) {
+
+function checkDeplicateAccount($pdo, $name) {
+    $sth = $pdo->prepare("SELECT * FROM accounts WHERE `name` = ?");
+    $sth->execute([$name]);
+    $result = $sth->fetchAll();
+    return count($result) === 0;
+}
+
+function existsAccount($accounts, $id, $password) {
+    // 配列データをloopして、一致する情報があるかを判定する
+    foreach($accounts as $account) {
+        if($account['id'] === $id && password_verify($password, $account['pass'])) {
+            return true;
+        }
+    }
+
+    // 失敗ならfalse
+    return false;
+}
+
+
+function saveAccount($pdo, $name, $password, $isAdmin) {
+    $sth = $pdo->prepare("INSERT INTO `accounts` (`name`, `password`, admin_flag) VALUE(?, ?, ?)");
+    return $sth->execute([$name, password_hash($password, PASSWORD_BCRYPT), $isAdmin ? 1 : 0]);
+}
+
+
+function validationPost($comment) {
     $result = [
-        'name' => true,
         'comment' => true
     ];
 
-    // name => アルファベット（大文字/小文字）と数字のみ / 32文字までに制限 / ３文字以上
-    if(preg_match('/[A-Za-z0-9]{3,32}/', $name) !== 1) {
-        $result['name'] = false;
-    }
-
-    // comment => 1024文字（2の10乗） / 許容する文字に制限は設けない
+    // comment -> 1024文字(2のn乗です) / 許容する文字に制限は設けない
     if(mb_strlen($comment) > 1024) {
         $result['comment'] = false;
     }
@@ -28,24 +54,27 @@ function validationPost($name, $comment) {
     return $result;
 }
 
-function requestPost($fh) {
-    $date = time();
-
-    if(fputcsv($fh, [$_POST['name'], $_POST['comment'], $date]) === false) {
-        echo "やばいよ！";
-    }
+function requestPost($pdo) {
+    $sth = $pdo->prepare("INSERT INTO `comments` (`account_id`, `comment`) VALUE(?, ?)");
+    return $sth->execute([$_SESSION['account']['id'], $_POST['comment']]);
 }
 
-function getBbs($fh) {
-    $bbsArray = [];
-    rewind($fh);
 
-    while (($buffer = fgetcsv($fh, 4096)) !== false) {
-        $bbsArray[] = [
-            'name' => $buffer[0],
-            'comment' => $buffer[1],
-            'date' => $buffer[2]
-        ];
-    }
-    return $bbsArray;
+function deleteBbs($pdo, $id) {
+    $sth = $pdo->prepare("DELETE FROM `comments` WHERE id=?;");
+    return $sth->execute([$id]);
+}
+
+
+function getBbs($pdo) {
+    $sth = $pdo->prepare("SELECT `comments`.`id`, `comment`, `create_date`, `name` FROM comments JOIN accounts ON comments.account_id = accounts.id;");
+    $sth->execute();
+    return $sth->fetchAll();
+}
+
+
+function dbConnect() {
+    $pdo = new PDO("mysql:host=mysql;dbname=bbs", 'root', 'root');
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    return $pdo;
 }
