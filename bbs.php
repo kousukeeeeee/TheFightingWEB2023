@@ -71,7 +71,7 @@ $bbs = getBbs($pdo);
     <?php endif; ?>
 
     <hr />
-<h2>書き込み一覧だよー！</h2>
+    <h2>書き込み一覧だよー！</h2>
 <div>
 <?php
 foreach($bbs as $item):
@@ -83,6 +83,12 @@ foreach($bbs as $item):
         <?php if($_SESSION['account']['admin_flag'] === 1): ?>
             <form action="delete.php" method="POST">
                 <input type="submit" value="削除する">
+                <input type="hidden" name="bbs_id" value="<?php echo $item['id']; ?>">
+            </form>
+        <?php endif; ?>
+        <?php if($_SESSION['account']['name'] === $item['name']): ?>
+            <form action="update.php" method="GET">
+                <input type="submit" value="更新する">
                 <input type="hidden" name="bbs_id" value="<?php echo $item['id']; ?>">
             </form>
         <?php endif; ?>
